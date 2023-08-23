@@ -40,14 +40,14 @@ def aavescan_req(threshold):
         data = response.json()
         for reserve in data['data']['reserves']:
             if reserve['symbol'] == 'USDT':
-                variable_borrow_rate = float(reserve['variableBorrowRate'])
+                variable_borrow_rate = float(reserve['variableBorrowRate'])/ 10000000000000000000000000
                 if variable_borrow_rate > threshold:
-                    borrow_rate = variable_borrow_rate / 1000000000000000000000000000
+                    borrow_rate = variable_borrow_rate
                     processed_data = {
                         'name': reserve['name'],
                         'symbol': reserve['symbol'],
                         'liquidity': reserve['totalLiquidity'],
-                        'price_eth': reserve['price']['priceInEth'],
+                        'price_eth': float(reserve['price']['priceInEth'])/100000000,
                         'variable_borrow_rate': borrow_rate
                     }
                     return processed_data, True
@@ -63,22 +63,22 @@ async def send_to_telegram(data, threshold_crossed):
 
     bot = telegram.Bot(token=bot_token)
     if threshold_crossed:
-        message = f"⚠️ Threshold crossed!\nToken: {data['symbol']}\nName: {data['name']}\nLiquidity: {data['liquidity']}\nPrice (ETH): {data['price_eth']}\nVariable Borrow Rate: {data['variable_borrow_rate']}"
-    else:
-        message = f"Token: {data['symbol']}\nName: {data['name']}\nLiquidity: {data['liquidity']}\nPrice (ETH): {data['price_eth']}"
+        message = f"⚠️ Threshold crossed!\nToken: {data['symbol']}\nName: {data['name']}\nLiquidity: {data['liquidity']}\nPrice: {data['price_eth']}\nVariable Borrow Rate: {data['variable_borrow_rate']}"
+    # else:
+    #     message = f"Token: {data['symbol']}\nName: {data['name']}\nLiquidity: {data['liquidity']}\nPrice: {data['price_eth']}"
 
-    await bot.send_message(chat_id=chat_id, text=message)  # Await the asynchronous function
+    await bot.send_message(chat_id=chat_id, text=message)  
 
 async def main():
-    threshold = 0.1
+    threshold = 2
 
     while True:
         data, threshold_crossed = aavescan_req(threshold)
 
         if data:
-            await send_to_telegram(data, threshold_crossed)  # Await the asynchronous function
+            await send_to_telegram(data, threshold_crossed)  
 
-        await asyncio.sleep(3600)  # Await the asynchronous sleep
+        await asyncio.sleep(10)  
 
 if __name__ == "__main__":
-    asyncio.run(main())  # Use asyncio.run to run the asynchronous
+    asyncio.run(main())  
