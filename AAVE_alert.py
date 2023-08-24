@@ -3,6 +3,8 @@ import telegram
 import time
 import asyncio
 
+WHITELISTED_CHAT_IDS = [1489703363, 5028701122]  
+
 def aavescan_req(threshold):
     api_url = 'https://api.thegraph.com/subgraphs/name/aave/protocol-v3-polygon'
     headers = {
@@ -59,15 +61,12 @@ def aavescan_req(threshold):
 
 async def send_to_telegram(data, threshold_crossed):
     bot_token = '6469465654:AAHAYHDOhoJWATlQFyOXThGKysOEDnhEBds'
-    chat_id = 5028701122
-
     bot = telegram.Bot(token=bot_token)
-    if threshold_crossed:
-        message = f"⚠️ Threshold crossed!\nToken: {data['symbol']}\nName: {data['name']}\nLiquidity: {data['liquidity']}\nPrice: {data['price_eth']}\nVariable Borrow Rate: {data['variable_borrow_rate']}"
-    # else:
-    #     message = f"Token: {data['symbol']}\nName: {data['name']}\nLiquidity: {data['liquidity']}\nPrice: {data['price_eth']}"
-
-    await bot.send_message(chat_id=chat_id, text=message)  
+    message = f"⚠️ Threshold crossed!\nToken: {data['symbol']}\nName: {data['name']}\nLiquidity: {data['liquidity']}\nPrice: {data['price_eth']}\nVariable Borrow Rate: {data['variable_borrow_rate']}"
+    
+    for chat_id in WHITELISTED_CHAT_IDS:
+        if threshold_crossed:
+            await bot.send_message(chat_id=chat_id, text=message) 
 
 async def main():
     threshold = 2
@@ -76,9 +75,9 @@ async def main():
         data, threshold_crossed = aavescan_req(threshold)
 
         if data:
-            await send_to_telegram(data, threshold_crossed)  
+            await send_to_telegram(data, threshold_crossed)
 
-        await asyncio.sleep(10)  
+        await asyncio.sleep(10) 
 
 if __name__ == "__main__":
     asyncio.run(main())  
